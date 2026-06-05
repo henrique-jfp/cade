@@ -47,6 +47,10 @@ def _infer_category(title: str, source_category: str | None = None) -> str:
         return "Movies"
     if any(word in lowered for word in ["software", "windows", "adobe"]):
         return "Software"
+    if any(word in lowered for word in ["sport", "match", "game", "nba", "fifa", "ufc"]):
+        # Note: "game" is also in Games, so order matters. Sports should probably check for specific sport terms.
+        if any(sport in lowered for sport in ["football", "soccer", "nba", "basketball", "ufc", "f1", "formula"]):
+            return "Sports"
     return "Other"
 
 
@@ -106,8 +110,28 @@ def _media_type_to_jackett_categories(media_type: str) -> list[str]:
         "adult": ["6000", "6010", "6020", "6030", "6040", "6050", "6060", "6070"],
         "porn": ["6000", "6010", "6020", "6030", "6040", "6050", "6060", "6070"],
         "books": ["7000"],
+        "sports": ["5040"],
     }
     return mapping.get(normalized, [])
+
+
+async def search_youtube_titles(query: str, limit: int = 5) -> list[str]:
+    """Search YouTube for the query and return a list of video titles."""
+    try:
+        import yt_dlp
+        ydl_opts = {
+            'quiet': True,
+            'extract_flat': True,
+            'force_generic_utils': True,
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # We use ytsearch to find videos
+            info = await asyncio.to_thread(ydl.extract_info, f"ytsearch{limit}:{query}", download=False)
+            titles = [entry.get('title') for entry in info.get('entries', []) if entry.get('title')]
+            return titles
+    except Exception as e:
+        logging.warning(f"YouTube title search failed: {e}")
+        return []
 
 
 async def search_jackett(query: str, media_type: str = "all", limit: int = 120) -> list[TorrentResult]:
