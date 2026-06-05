@@ -638,9 +638,6 @@ async def search_all(query: str, media_type: str = "all", max_results: int = 150
         providers.append((search_sukebei, [query, max_results]))
         providers.append((search_pornbay, [query, max_results]))
 
-    import asyncio
-    import logging
-
     async def run_provider(provider_func, args):
         try:
             return await asyncio.wait_for(provider_func(*args), timeout=8.0)
