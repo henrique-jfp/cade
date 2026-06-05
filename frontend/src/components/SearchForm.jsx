@@ -18,6 +18,7 @@ export function SearchForm({ query, setQuery, mediaType, setMediaType, loading, 
           <option value="game">Jogos</option>
           <option value="music">Música</option>
           <option value="software">Software</option>
+          <option value="sports">Esportes</option>
           <option value="adult">Cam/Adulto</option>
         </select>
         <button type="submit" disabled={loading}>
