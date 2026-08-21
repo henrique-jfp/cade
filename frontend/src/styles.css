@@ -144,6 +144,29 @@ body {
   cursor: pointer;
   background: #2563eb;
   color: white;
+  transition: background 0.15s ease-in-out;
+}
+
+.btn-primary-download {
+  background: #10b981 !important;
+  font-weight: 600;
+}
+
+.btn-primary-download:hover {
+  background: #059669 !important;
+}
+
+.btn-primary-download:disabled {
+  background: #4b5563 !important;
+  cursor: wait;
+}
+
+.btn-icon {
+  background: #374151 !important;
+}
+
+.btn-icon:hover {
+  background: #4b5563 !important;
 }
 
 .sort-controls {

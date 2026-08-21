@@ -18,6 +18,7 @@ function App() {
   const [playerUrl, setPlayerUrl] = useState('')
   const [playerTitle, setPlayerTitle] = useState('')
   const [playerMode, setPlayerMode] = useState('video')
+  const [resolvingHash, setResolvingHash] = useState('')
 
   function canUseVideoTag(url) {
     if (!url) return false
@@ -100,21 +101,13 @@ function App() {
 
   async function onWatch(item) {
     const magnet = item?.magnet
-    const instantAvailable = item?.instant_available
-
     if (!magnet) return
 
-    if (!instantAvailable) {
-      alert('Esse item nao esta como instant no RD. Abrindo magnet direto...')
-      window.location.href = magnet
-      return
-    }
-
+    setResolvingHash(item.infohash)
     try {
       const data = await resolveMagnet(magnet)
       if (!data.success || !data.stream_url) {
-        alert(data.message || 'Nao foi possivel gerar stream. Abrindo magnet...')
-        window.location.href = magnet
+        alert(data.message || 'Não foi possível gerar link de reprodução.')
         return
       }
 
@@ -122,41 +115,52 @@ function App() {
       setPlayerUrl(data.stream_url)
       setPlayerMode(canUseVideoTag(data.stream_url) ? 'video' : 'iframe')
     } catch (err) {
-      alert('Erro ao gerar link RD. Abrindo magnet direto...')
-      window.location.href = magnet
+      alert('Erro ao gerar link de reprodução via Real-Debrid.')
+    } finally {
+      setResolvingHash('')
     }
   }
 
   async function onDownload(item) {
     const magnet = item?.magnet
-    const instantAvailable = item?.instant_available
-
     if (!magnet) return
 
-    if (!instantAvailable) {
+    if (magnet.startsWith('http://') || magnet.startsWith('https://')) {
       window.location.href = magnet
       return
     }
 
+    setResolvingHash(item.infohash)
     try {
       const data = await resolveMagnet(magnet)
       const downloadTarget = data.download_url || data.stream_url
-      if (!data.success || !downloadTarget) {
-        alert(data.message || 'Nao foi possivel gerar link de download. Abrindo magnet...')
-        window.location.href = magnet
-        return
+      if (data.success && downloadTarget) {
+        const link = document.createElement('a')
+        link.href = downloadTarget
+        link.download = ''
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+      } else {
+        const confirmMagnet = window.confirm(
+          (data.message || 'O Real-Debrid está adicionando este torrent na nuvem.') +
+          '\n\nDeseja tentar abrir o link Magnet em um app de torrent local?'
+        )
+        if (confirmMagnet) {
+          window.location.href = magnet
+        }
       }
-      window.open(downloadTarget, '_blank', 'noopener,noreferrer')
     } catch (err) {
-      alert('Erro ao gerar download RD. Abrindo magnet direto...')
-      window.location.href = magnet
+      alert('Erro ao resolver download via Real-Debrid: ' + (err.message || 'Erro de conexão'))
+    } finally {
+      setResolvingHash('')
     }
   }
 
   async function onCopyMagnet(magnet) {
     if (!magnet) return
     await navigator.clipboard.writeText(magnet)
-    alert('Magnet copiado')
+    alert('Link Magnet copiado para a área de transferência!')
   }
 
   return (
@@ -228,6 +232,7 @@ function App() {
           <ResultCard 
             key={item.infohash} 
             item={item} 
+            isResolving={resolvingHash === item.infohash}
             onWatch={onWatch} 
             onDownload={onDownload} 
             onCopyMagnet={onCopyMagnet} 

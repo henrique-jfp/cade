@@ -1,6 +1,8 @@
 import React from 'react';
 
-export function ResultCard({ item, onWatch, onDownload, onCopyMagnet }) {
+export function ResultCard({ item, onWatch, onDownload, onCopyMagnet, isResolving }) {
+  const isBook = (item.category || '').toLowerCase() === 'books' || item.title.toLowerCase().includes('epub');
+
   return (
     <article className="card">
       <div className="card-top">
@@ -47,11 +49,27 @@ export function ResultCard({ item, onWatch, onDownload, onCopyMagnet }) {
       </div>
 
       <div className="actions">
-        <button onClick={() => onWatch(item)}>
-          {item.instant_available ? '▶ Assistir' : '📥 Abrir Magnet'}
+        {!isBook && (
+          <button onClick={() => onWatch(item)} disabled={isResolving}>
+            {item.instant_available ? '▶ Assistir' : '📥 Reproduzir'}
+          </button>
+        )}
+        <button 
+          onClick={() => onDownload(item)} 
+          disabled={isResolving} 
+          className="btn-primary-download"
+          title="Baixa o arquivo direto no navegador/celular via HTTPS"
+        >
+          {isResolving ? '⏳ Resolvendo HTTP...' : '📲 Baixar no Navegador (HTTP)'}
         </button>
-        <button onClick={() => onDownload(item)}>⬇ Baixar</button>
-        <button onClick={() => onCopyMagnet(item.magnet)} title="Copiar Magnet">📋</button>
+        <button 
+          onClick={() => onCopyMagnet(item.magnet)} 
+          disabled={isResolving}
+          className="btn-icon" 
+          title="Copiar Link Magnet"
+        >
+          📋 Magnet
+        </button>
       </div>
     </article>
   );
