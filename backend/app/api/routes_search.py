@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from app.clients.google_books_client import GoogleBooksClient
 from app.clients.real_debrid_client import RealDebridApiError, RealDebridAuthError
 from app.clients.tmdb_client import TmdbClient
 from app.core.config import Settings
 from app.models.schemas import Metadata, SearchResponse, SearchResultItem, TorrentResult
 from app.services.cache_checker import CacheChecker
-from app.services.real_deps import get_cache_checker, get_settings, get_tmdb_client
+from app.services.real_deps import get_cache_checker, get_google_books_client, get_settings, get_tmdb_client
 from app.services.result_ranker import rank_results
 from app.services.torrent_searcher import search_all
 
@@ -15,10 +16,11 @@ router = APIRouter(prefix="/api", tags=["search"])
 @router.get("/search", response_model=SearchResponse)
 async def search(
     q: str = Query(..., min_length=1, description="Termo de busca"),
-    media_type: str = Query("all", description="all|movie|series|game|music|software|adult|anime|books|sports"),
+    media_type: str = Query("all", description="all|movie|series|game|music|software|adult|anime|books|epub|sports"),
     app_settings: Settings = Depends(get_settings),
     cache_checker: CacheChecker = Depends(get_cache_checker),
     tmdb_client: TmdbClient = Depends(get_tmdb_client),
+    google_books_client: GoogleBooksClient = Depends(get_google_books_client),
 ):
     torrents = await search_all(q, media_type=media_type, max_results=app_settings.max_search_results)
     ranked = rank_results(torrents)
@@ -46,12 +48,21 @@ async def search(
     metadata_map: dict[str, Metadata] = {}
     normalized_media = (media_type or "all").lower()
     can_enrich_with_tmdb = normalized_media in {"movie", "series", "tv"}
+    can_enrich_with_books = normalized_media in {"books", "epub"}
 
     if can_enrich_with_tmdb and app_settings.tmdb_api_key:
         for item in items_to_render[:5]:
             if item.title in metadata_map:
                 continue
             md = await tmdb_client.search_metadata(item.title)
+            metadata_map[item.title] = Metadata(**md) if md else Metadata(title=item.title)
+    elif can_enrich_with_books:
+        for item in items_to_render[:5]:
+            if item.title in metadata_map:
+                continue
+            # Extract clean title by removing extension / technical terms
+            clean_title = item.title.replace(".epub", "").replace(".pdf", "").replace(".mobi", "")
+            md = await google_books_client.search_metadata(clean_title)
             metadata_map[item.title] = Metadata(**md) if md else Metadata(title=item.title)
 
     response_items = [
@@ -79,3 +90,4 @@ async def search(
         items=response_items,
         warning=warning,
     )
+

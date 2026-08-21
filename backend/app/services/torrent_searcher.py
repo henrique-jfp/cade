@@ -35,6 +35,8 @@ def _infer_category(title: str, source_category: str | None = None) -> str:
     lowered = title.lower()
     if any(word in lowered for word in ['cam4','chaturbate','replay','recording','cam']):
         return 'Cam'
+    if any(word in lowered for word in ["epub", "mobi", "pdf", "ebook", "livro", "book"]):
+        return "Books"
     if any(word in lowered for word in ["game", "crack", "repack", "gog", "steam"]):
         return "Games"
     if any(word in lowered for word in ["xxx", "porn", "adult"]):
@@ -109,7 +111,8 @@ def _media_type_to_jackett_categories(media_type: str) -> list[str]:
         "software": ["4000"],
         "adult": ["6000", "6010", "6020", "6030", "6040", "6050", "6060", "6070"],
         "porn": ["6000", "6010", "6020", "6030", "6040", "6050", "6060", "6070"],
-        "books": ["7000"],
+        "books": ["7000", "7010", "7020", "7030", "7040"],
+        "epub": ["7000", "7010"],
         "sports": ["5040"],
     }
     return mapping.get(normalized, [])
@@ -621,6 +624,13 @@ async def search_all(query: str, media_type: str = "all", max_results: int = 150
     providers.append((search_jackett, [query, media, int(max_results * 1.5)]))
     providers.append((search_apibay, [query, max_results]))
     providers.append((search_1337x, [query, max_results]))
+
+    # For books / epub, also append a specific query with 'epub' if not already present
+    if media in {"books", "epub"} and "epub" not in query.lower():
+        epub_query = f"{query} epub"
+        providers.append((search_jackett, [epub_query, media, int(max_results * 1.5)]))
+        providers.append((search_apibay, [epub_query, max_results]))
+        providers.append((search_1337x, [epub_query, max_results]))
     
     # Add specialized providers based on media type
     if media in {"all", "movie"}:

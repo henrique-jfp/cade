@@ -8,10 +8,11 @@ export function SearchForm({ query, setQuery, mediaType, setMediaType, loading, 
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar filme, série, game..."
+          placeholder="Buscar filme, série, livro (epub), game..."
         />
         <select value={mediaType} onChange={(e) => setMediaType(e.target.value)}>
           <option value="all">Tudo</option>
+          <option value="books">📚 Livros (EPUB)</option>
           <option value="movie">Filmes</option>
           <option value="series">Séries</option>
           <option value="anime">Anime</option>

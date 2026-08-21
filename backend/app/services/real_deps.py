@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from app.clients.google_books_client import GoogleBooksClient
 from app.clients.real_debrid_client import RealDebridClient
 from app.clients.tmdb_client import TmdbClient
 from app.core.config import Settings, settings
@@ -27,6 +28,11 @@ def _tmdb_client() -> TmdbClient:
     return TmdbClient(settings.tmdb_base_url, settings.tmdb_api_key)
 
 
+@lru_cache
+def _google_books_client() -> GoogleBooksClient:
+    return GoogleBooksClient()
+
+
 def get_cache_checker() -> CacheChecker:
     return CacheChecker(_cache_repo(), _rd_client())
 
@@ -35,5 +41,10 @@ def get_tmdb_client() -> TmdbClient:
     return _tmdb_client()
 
 
+def get_google_books_client() -> GoogleBooksClient:
+    return _google_books_client()
+
+
 def get_link_service() -> LinkService:
     return LinkService(_rd_client())
+

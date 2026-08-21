@@ -68,6 +68,12 @@ function App() {
       return
     }
 
+    if (mode === 'books') {
+      setMediaType('books')
+      setQuery('')
+      return
+    }
+
     if (mode === 'rom') {
       setMediaType('game')
       setQuery('switch homebrew')
@@ -164,6 +170,10 @@ function App() {
           <button type="button" className="quick-mode-card" onClick={() => applyQuickMode('general')}>
             <span className="quick-mode-title">Geral</span>
             <span className="quick-mode-desc">Busca ampla em todas as categorias</span>
+          </button>
+          <button type="button" className="quick-mode-card" onClick={() => applyQuickMode('books')}>
+            <span className="quick-mode-title">📚 Livros / EPUB</span>
+            <span className="quick-mode-desc">E-books em formato EPUB/PDF com capas</span>
           </button>
           <button type="button" className="quick-mode-card" onClick={() => applyQuickMode('rom')}>
             <span className="quick-mode-title">ROM / Homebrew</span>
