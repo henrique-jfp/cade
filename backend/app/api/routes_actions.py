@@ -12,9 +12,9 @@ router = APIRouter(prefix="/api/actions", tags=["actions"])
 async def resolve_magnet(payload: ResolveRequest, link_service: LinkService = Depends(get_link_service)):
     try:
         result = await link_service.resolve(payload.magnet)
-    except RealDebridAuthError as exc:
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
-    except RealDebridApiError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
-
-    return ResolveResponse(**result)
+        return ResolveResponse(**result)
+    except Exception as exc:
+        return ResolveResponse(
+            success=False,
+            message="Real-Debrid desativado ou sem assinatura Premium ativa."
+        )

@@ -26,24 +26,17 @@ async def search(
     ranked = rank_results(torrents)
 
     hashes = [t.infohash for t in ranked]
+    cached_hashes: set[str] = set()
     warning: str | None = None
-    try:
-        cached_hashes = await cache_checker.filter_cached_hashes(hashes)
-    except RealDebridAuthError as exc:
-        if exc.status_code == 403 and app_settings.allow_unverified_on_rd_forbidden:
+
+    if app_settings.real_debrid_api_key:
+        try:
+            cached_hashes = await cache_checker.filter_cached_hashes(hashes)
+        except Exception:
             cached_hashes = set()
-            warning = (
-                "Sua conta Real-Debrid não permite instantAvailability no momento. "
-                "Mostrando resultados não verificados."
-            )
-        else:
-            raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
-    except RealDebridApiError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     instant_items: list[TorrentResult] = [t for t in ranked if t.infohash in cached_hashes]
-    fallback_items: list[TorrentResult] = ranked if warning else []
-    items_to_render = instant_items if instant_items else fallback_items
+    items_to_render = instant_items if instant_items else ranked
 
     metadata_map: dict[str, Metadata] = {}
     normalized_media = (media_type or "all").lower()

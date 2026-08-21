@@ -103,22 +103,28 @@ function App() {
     const magnet = item?.magnet
     if (!magnet) return
 
+    if (magnet.startsWith('http://') || magnet.startsWith('https://')) {
+      window.open(magnet, '_blank', 'noopener,noreferrer')
+      return
+    }
+
     setResolvingHash(item.infohash)
     try {
       const data = await resolveMagnet(magnet)
-      if (!data.success || !data.stream_url) {
-        alert(data.message || 'Não foi possível gerar link de reprodução.')
+      if (data.success && data.stream_url) {
+        setPlayerTitle(item?.title || data.filename || 'Player')
+        setPlayerUrl(data.stream_url)
+        setPlayerMode(canUseVideoTag(data.stream_url) ? 'video' : 'iframe')
         return
       }
-
-      setPlayerTitle(item?.title || data.filename || 'Player')
-      setPlayerUrl(data.stream_url)
-      setPlayerMode(canUseVideoTag(data.stream_url) ? 'video' : 'iframe')
     } catch (err) {
-      alert('Erro ao gerar link de reprodução via Real-Debrid.')
+      // Ignorar falha RD
     } finally {
       setResolvingHash('')
     }
+
+    await navigator.clipboard.writeText(magnet)
+    alert('Link Magnet copiado para a área de transferência! Cole no seu cliente de Torrent.')
   }
 
   async function onDownload(item) {
@@ -141,20 +147,16 @@ function App() {
         document.body.appendChild(link)
         link.click()
         link.remove()
-      } else {
-        const confirmMagnet = window.confirm(
-          (data.message || 'O Real-Debrid está adicionando este torrent na nuvem.') +
-          '\n\nDeseja tentar abrir o link Magnet em um app de torrent local?'
-        )
-        if (confirmMagnet) {
-          window.location.href = magnet
-        }
+        return
       }
     } catch (err) {
-      alert('Erro ao resolver download via Real-Debrid: ' + (err.message || 'Erro de conexão'))
+      // Ignorar falha RD
     } finally {
       setResolvingHash('')
     }
+
+    await navigator.clipboard.writeText(magnet)
+    alert('Link Magnet copiado para a área de transferência! Cole no seu aplicativo de Torrent.')
   }
 
   async function onCopyMagnet(magnet) {

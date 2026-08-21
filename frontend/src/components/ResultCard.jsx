@@ -21,7 +21,7 @@ export function ResultCard({ item, onWatch, onDownload, onCopyMagnet, isResolvin
             {item.instant_available ? (
               <span className="badge instant">⚡ Instant RD</span>
             ) : (
-              <span className="badge unverified">⚠ Não verificado</span>
+              <span className="badge unverified">🧲 Torrent</span>
             )}
             {item.category && item.category !== 'Cam' && <span className="badge category">{item.category}</span>}
             {item.category === 'Cam' && <span className="badge cam-replay">📷 Cam Replay</span>}
@@ -58,9 +58,9 @@ export function ResultCard({ item, onWatch, onDownload, onCopyMagnet, isResolvin
           onClick={() => onDownload(item)} 
           disabled={isResolving} 
           className="btn-primary-download"
-          title="Baixa o arquivo direto no navegador/celular via HTTPS"
+          title="Baixar arquivo ou obter link"
         >
-          {isResolving ? '⏳ Resolvendo HTTP...' : '📲 Baixar no Navegador (HTTP)'}
+          {isResolving ? '⏳ Processando...' : '📥 Baixar / Obter Link'}
         </button>
         <button 
           onClick={() => onCopyMagnet(item.magnet)} 
